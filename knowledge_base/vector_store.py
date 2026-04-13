@@ -97,7 +97,8 @@ class VectorStore:
             self.logger.info(f"创建索引，维度: {self.dimension}")
         elif vectors.shape[1] != self.dimension:
             raise ValueError(
-                f"向量维度不匹配: 期望 {self.dimension}, 实际 {vectors.shape[1]}"
+                f"向量维度不匹配: 期望 {self.dimension}, 实际 {vectors.shape[1]}. "
+                f"可能是 Embedding 模型变更导致，请删除索引文件重新运行 setup.py"
             )
 
         # 归一化向量

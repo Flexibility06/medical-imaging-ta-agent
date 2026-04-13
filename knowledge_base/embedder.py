@@ -107,8 +107,8 @@ class Embedder:
                 result = await self.client.embedding(batch_texts)
                 batch_embeddings = result["embeddings"]
 
-                # 确保是列表的列表
-                if not isinstance(batch_embeddings[0], list):
+                # 确保是列表的列表（处理单条结果的情况）
+                if batch_embeddings and not isinstance(batch_embeddings[0], list):
                     batch_embeddings = [batch_embeddings]
 
                 embeddings.extend(batch_embeddings)

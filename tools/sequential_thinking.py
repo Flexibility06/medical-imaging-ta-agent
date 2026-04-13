@@ -76,7 +76,7 @@ class SequentialThinkingTool(BaseTool):
             ],
         }
 
-    async def execute(self, **kwargs) -> str:
+    async def _execute(self, **kwargs) -> str:
         """
         执行思考步骤
 

@@ -78,6 +78,8 @@ class Settings:
             missing.append("LLM_API_KEY")
         if not cls.LLM_BASE_URL:
             missing.append("LLM_BASE_URL")
+        elif not cls.LLM_BASE_URL.startswith(("http://", "https://")):
+            missing.append("LLM_BASE_URL (格式错误，需要以 http:// 或 https:// 开头)")
         return missing
 
 

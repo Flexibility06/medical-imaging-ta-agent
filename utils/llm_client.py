@@ -95,8 +95,8 @@ class LLMClient:
 
             # 解析响应
             if stream:
-                # 流式输出处理（暂不支持，预留接口）
-                return {"content": "", "tool_calls": None, "raw_response": response}
+                # 流式输出暂不支持，明确报错
+                raise LLMError("流式输出暂未支持，请将 stream 设为 False")
 
             # 非流式输出处理
             choice = response.choices[0]

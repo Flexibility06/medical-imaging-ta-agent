@@ -8,6 +8,7 @@
 - 返回格式化的检索结果
 """
 
+import asyncio
 import logging
 from pathlib import Path
 from typing import Any
@@ -84,7 +85,7 @@ class KnowledgeBaseSearchTool(BaseTool):
             "required": ["query"],
         }
 
-    async def execute(self, **kwargs) -> str:
+    async def _execute(self, **kwargs) -> str:
         """
         执行知识库检索
 
@@ -112,8 +113,8 @@ class KnowledgeBaseSearchTool(BaseTool):
         try:
             self.logger.info(f"搜索知识库: {query}")
 
-            # 获取查询向量
-            result = await embed(query)
+            # 获取查询向量（添加超时控制）
+            result = await asyncio.wait_for(embed(query), timeout=30.0)
             query_embedding = result["embeddings"]
 
             # 检索
@@ -133,6 +134,8 @@ class KnowledgeBaseSearchTool(BaseTool):
 
             return "\n\n".join(formatted_results)
 
+        except asyncio.TimeoutError:
+            return "知识库检索超时，请稍后重试"
         except Exception as e:
             self.logger.error(f"知识库检索失败: {e}")
             return f"检索出错: {str(e)}"
@@ -151,6 +154,14 @@ async def search_knowledge_base(
         for chunk, score in results:
             print(f"{chunk.source_info}: {chunk.text[:100]}...")
     """
-    store = VectorStore.load(settings.INDEX_PATH, settings.CHUNKS_PATH)
+    import asyncio
+    loop = asyncio.get_event_loop()
+    # 在线程池中执行同步操作，避免阻塞事件循环
+    store = await loop.run_in_executor(
+        None, VectorStore.load, settings.INDEX_PATH, settings.CHUNKS_PATH
+    )
     result = await embed(query)
-    return store.search(result["embeddings"], top_k=top_k)
+    query_embedding = result["embeddings"]
+    return await loop.run_in_executor(
+        None, store.search, query_embedding, top_k
+    )

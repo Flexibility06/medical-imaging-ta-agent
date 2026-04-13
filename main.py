@@ -24,8 +24,9 @@ from rich.panel import Panel
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from config.settings import settings, Settings
+from config.prompts import build_system_prompt
 from agent.chat_engine import ChatEngine
-from agent.student_profile import ProfileManager, get_background_prompt_suffix
+from agent.student_profile import ProfileManager
 from agent.response_formatter import ResponseFormatter, print_welcome, print_help
 
 console = Console()
@@ -128,10 +129,11 @@ async def handle_command(
     elif cmd == "/profile":
         profile_manager = ProfileManager()
         profile = profile_manager.interactive_setup()
-        # 更新引擎的背景
+        # 更新引擎的背景与 system prompt（下一条用户消息起使用）
         engine.student_background = profile.background
         engine.system_prompt = build_system_prompt(profile.background)
-        formatter.print_success("画像已更新，新设置将在下次对话生效")
+        engine._profile_name = profile.name
+        formatter.print_success("画像已更新，下一条消息起将按新设置回答")
 
     elif cmd == "/status":
         console.print(Panel(

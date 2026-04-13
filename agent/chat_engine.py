@@ -134,6 +134,9 @@ class ChatEngine:
         # 添加当前用户消息
         messages.append({"role": "user", "content": user_message})
 
+        # 保存用户消息到历史（放在这里确保顺序正确）
+        self._add_to_history("user", user_message)
+
         return messages
 
     def _add_to_history(self, role: str, content: str | None, **kwargs) -> None:
@@ -141,10 +144,23 @@ class ChatEngine:
         msg = ChatMessage(role=role, content=content, **kwargs)
         self.history.append(msg)
 
-        # 限制历史长度
+        # 限制历史长度，但要保持 tool_calls 和 tool 消息的完整性
         if len(self.history) > self.max_history * 2:  # *2 因为每轮有 assistant + user
-            # 保留最近的对话
-            self.history = self.history[-self.max_history * 2:]
+            # 找到第一个有效的截断点（确保不切断 tool 调用对）
+            cutoff_idx = len(self.history) - self.max_history * 2
+
+            # 如果 cutoff 点前一个是 assistant 且有 tool_calls，向前调整
+            while cutoff_idx > 0 and cutoff_idx < len(self.history):
+                prev_msg = self.history[cutoff_idx - 1]
+                if prev_msg.role == "assistant" and prev_msg.tool_calls:
+                    cutoff_idx += 1
+                    # 继续跳过所有相关的 tool 消息
+                    while cutoff_idx < len(self.history) and self.history[cutoff_idx].role == "tool":
+                        cutoff_idx += 1
+                else:
+                    break
+
+            self.history = self.history[cutoff_idx:]
 
     async def chat(
         self,
@@ -163,6 +179,16 @@ class ChatEngine:
         """
         import time
         start_time = time.time()
+
+        # 重置 sequential thinking 工具状态（每次新查询开始时）
+        thinking_tool = self.tool_registry.get("sequential_thinking")
+        if thinking_tool and hasattr(thinking_tool, 'reset'):
+            thinking_tool.reset()
+
+        # 检查空输入
+        user_message = user_message.strip()
+        if not user_message:
+            return ChatResponse(content="请输入有效的问题。", duration_ms=0)
 
         tool_call_records: list[ToolCallRecord] = []
         messages = self._build_messages(user_message)
@@ -191,9 +217,8 @@ class ChatEngine:
                 # 没有工具调用，直接返回结果
                 assistant_content = result.get("content") or ""
 
-                # 保存到历史
+                # 保存助手回复到历史（用户消息已在 _build_messages 中保存）
                 self._add_to_history("assistant", assistant_content)
-                self._add_to_history("user", user_message)
 
                 # 记录日志
                 total_duration = int((time.time() - start_time) * 1000)
@@ -216,12 +241,14 @@ class ChatEngine:
             # 有工具调用，需要处理
             tool_calls = result["tool_calls"]
 
-            # 添加 assistant 消息（包含 tool_calls）到消息列表
-            messages.append({
-                "role": "assistant",
-                "content": None,
-                "tool_calls": tool_calls,
-            })
+            # 添加 assistant 消息（包含 tool_calls）到消息列表和历史
+            assistant_msg = ChatMessage(
+                role="assistant",
+                content=None,
+                tool_calls=tool_calls
+            )
+            self.history.append(assistant_msg)
+            messages.append(assistant_msg.to_dict())
 
             # 执行每个工具调用
             for tool_call in tool_calls:
@@ -255,18 +282,34 @@ class ChatEngine:
                     duration_ms=tool_duration,
                 ))
 
-                # 添加工具结果到消息列表
-                messages.append({
-                    "role": "tool",
-                    "tool_call_id": tool_call_id,
-                    "content": tool_result,
-                })
+                # 添加工具结果到消息列表和历史
+                tool_msg = ChatMessage(
+                    role="tool",
+                    content=tool_result,
+                    tool_call_id=tool_call_id,
+                    name=tool_name
+                )
+                self.history.append(tool_msg)
+                messages.append(tool_msg.to_dict())
 
         # 超过最大工具调用次数，强制返回
-        return ChatResponse(
-            content="工具调用次数过多，请简化您的问题。",
+        error_content = "工具调用次数过多，请简化您的问题。"
+        self._add_to_history("assistant", error_content)
+
+        total_duration = int((time.time() - start_time) * 1000)
+        self.chat_logger.log(
+            session_id=self.session_id,
+            background=self.student_background,
+            user_message=user_message,
             tool_calls=tool_call_records,
-            duration_ms=int((time.time() - start_time) * 1000),
+            assistant_response=error_content,
+            total_duration_ms=total_duration,
+        )
+
+        return ChatResponse(
+            content=error_content,
+            tool_calls=tool_call_records,
+            duration_ms=total_duration,
         )
 
     def _get_tool_status_icon(self, tool_name: str) -> str:
@@ -282,6 +325,10 @@ class ChatEngine:
     def clear_history(self) -> None:
         """清空对话历史"""
         self.history = []
+        # 重置 sequential thinking 工具状态
+        thinking_tool = self.tool_registry.get("sequential_thinking")
+        if thinking_tool and hasattr(thinking_tool, 'reset'):
+            thinking_tool.reset()
         self.logger.info("对话历史已清空")
 
     def get_history_summary(self) -> str:

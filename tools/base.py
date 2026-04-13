@@ -64,7 +64,9 @@ class BaseTool(ABC):
         """
         ...
 
-    @abstractmethod
+    # 工具结果最大长度限制（约 8000 字符 ≈ 2000 tokens）
+    MAX_RESULT_LENGTH = 20000
+
     async def execute(self, **kwargs) -> str:
         """
         执行工具
@@ -78,6 +80,20 @@ class BaseTool(ABC):
 
         异常:
             工具执行出错时应该捕获异常并返回错误信息字符串，而不是抛出异常
+        """
+        result = await self._execute(**kwargs)
+        # 截断超长结果
+        if len(result) > self.MAX_RESULT_LENGTH:
+            result = result[:self.MAX_RESULT_LENGTH] + "\n... (结果已截断)"
+        return result
+
+    @abstractmethod
+    async def _execute(self, **kwargs) -> str:
+        """
+        实际执行工具的逻辑（子类实现）
+
+        返回:
+            工具执行结果的字符串表示
         """
         ...
 

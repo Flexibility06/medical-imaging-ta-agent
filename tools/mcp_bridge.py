@@ -55,7 +55,7 @@ class MCPToolWrapper(BaseTool):
     def parameters_schema(self) -> dict:
         return self._parameters_schema
 
-    async def execute(self, **kwargs) -> str:
+    async def _execute(self, **kwargs) -> str:
         """通过 MCP 调用工具"""
         try:
             result = await self._session.call_tool(self._name, arguments=kwargs)

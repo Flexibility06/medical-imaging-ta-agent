@@ -7,7 +7,9 @@ arXiv 论文搜索工具
 - 返回论文标题、作者、摘要、链接等信息
 """
 
+import asyncio
 import logging
+from concurrent.futures import ThreadPoolExecutor
 from typing import Any
 
 import arxiv
@@ -58,7 +60,7 @@ class ArxivSearchTool(BaseTool):
             "required": ["query"],
         }
 
-    async def execute(self, **kwargs) -> str:
+    async def _execute(self, **kwargs) -> str:
         """
         执行 arXiv 搜索
 
@@ -88,8 +90,13 @@ class ArxivSearchTool(BaseTool):
                 sort_by=arxiv.SortCriterion.Relevance,
             )
 
-            # 执行搜索
-            results = list(client.results(search))
+            # 执行搜索（添加超时控制）
+            loop = asyncio.get_event_loop()
+            with ThreadPoolExecutor() as pool:
+                results = await asyncio.wait_for(
+                    loop.run_in_executor(pool, lambda: list(client.results(search))),
+                    timeout=60.0
+                )
 
             if not results:
                 return f"未找到与 '{query}' 相关的论文"
@@ -116,6 +123,8 @@ class ArxivSearchTool(BaseTool):
 
             return "\n\n".join(formatted_results)
 
+        except asyncio.TimeoutError:
+            return "arXiv 搜索超时，请稍后重试"
         except Exception as e:
             self.logger.error(f"arXiv 搜索失败: {e}")
             return f"搜索出错: {str(e)}"

@@ -76,7 +76,7 @@ class WebSearchTool(BaseTool):
 
         self._last_search_time = time.time()
 
-    async def execute(self, **kwargs) -> str:
+    async def _execute(self, **kwargs) -> str:
         """
         执行网络搜索
 
