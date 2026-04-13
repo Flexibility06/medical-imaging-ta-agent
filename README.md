@@ -1,27 +1,25 @@
 # 医学影像课程智能助教 Agent (CLI MVP)
 
-基于 RAG + 工具调用的命令行智能助教，面向"医学影像 + AI"交叉课程的学生。
-
 ## 📖 项目简介
 
-本系统是一个智能助教 Agent，具备以下核心能力：
+本项目是智能助教 Agent Demo，现阶段具备以下能力：
 
 1. **知识库问答**：解析并索引课程 PDF 课件，支持语义检索
 2. **差异化回答**：根据学生背景（CS/BME/零基础）提供个性化解答
 3. **上下文对话**：支持连续多轮对话，处理代码、公式、医学概念混合问题
 4. **Agent 工具调用**：自动调用 arXiv 论文搜索、网络搜索、结构化推理等工具
-5. **问答日志**：记录对话历史，便于分析学生共性困难
 
 ## ✨ 功能特性
 
-| 功能 | 说明 |
-|------|------|
-| 🔍 **知识库检索** | 搜索课程 PPT、教材内容，优先基于课程资料回答 |
-| 📄 **arXiv 搜索** | 搜索学术论文，获取最新研究进展 |
-| 🌐 **网络搜索** | DuckDuckGo 搜索，补充最新资讯和工具文档 |
-| 🤔 **结构化推理** | 分步推理复杂问题，如调试代码、设计实验 |
-| 👤 **学生画像** | 根据 CS/BME/零基础背景提供差异化回答 |
-| 📝 **问答日志** | JSON Lines 格式记录，支持后续分析 |
+
+| 功能              | 说明                        |
+| --------------- | ------------------------- |
+| 🔍 **知识库检索**    | 搜索课程 PPT、教材内容，优先基于课程资料回答  |
+| 📄 **arXiv 搜索** | 搜索学术论文，获取最新研究进展           |
+| 🌐 **网络搜索**     | DuckDuckGo 搜索，补充最新资讯和工具文档 |
+| 🤔 **结构化推理**    | 分步推理复杂问题，如调试代码、设计实验       |
+| 📝 **问答日志**     | JSON Lines 格式记录，支持后续分析    |
+
 
 ## ✅ 环境要求
 
@@ -67,6 +65,7 @@ LLM_MODEL_NAME=gpt-4o-mini
 # LLM_MODEL_NAME=deepseek-chat
 
 # Embedding 配置（可与 LLM 不同）
+# 硅基流动有部分免费额度 https://siliconflow.cn
 EMBEDDING_API_KEY=${LLM_API_KEY}
 EMBEDDING_BASE_URL=${LLM_BASE_URL}
 EMBEDDING_MODEL_NAME=text-embedding-3-small
@@ -88,6 +87,7 @@ python setup.py
 ```
 
 首次构建会：
+
 - 解析所有 PDF 提取文本
 - 切分为语义块
 - 生成向量嵌入
@@ -98,17 +98,6 @@ python setup.py
 ```bash
 python main.py
 ```
-
-首次启动会引导你配置学生画像（背景、兴趣等）。
-
-### 从 GitHub 获取源码
-
-```bash
-git clone https://github.com/Flexibility06/medical-imaging-ta-agent.git
-cd medical-imaging-ta-agent
-```
-
-也可在仓库页面下载 Release 中的 Source code 压缩包；该归档默认**不包含**根目录下的 `test_*.py` 等开发自检脚本（完整功能请使用 `git clone` 获取全部文件）。
 
 ## 💬 使用方法
 
@@ -123,13 +112,15 @@ cd medical-imaging-ta-agent
 
 ### 特殊命令
 
-| 命令 | 说明 |
-|------|------|
-| `/help` | 显示帮助信息 |
-| `/clear` | 清空对话历史 |
-| `/profile` | 查看/修改学生画像 |
-| `/status` | 查看当前状态（会话 ID、背景、工具列表） |
-| `/exit` | 退出程序 |
+
+| 命令         | 说明                    |
+| ---------- | --------------------- |
+| `/help`    | 显示帮助信息                |
+| `/clear`   | 清空对话历史                |
+| `/profile` | 查看/修改学生画像             |
+| `/status`  | 查看当前状态（会话 ID、背景、工具列表） |
+| `/exit`    | 退出程序                  |
+
 
 ### 启动选项
 
@@ -147,17 +138,19 @@ python main.py --no-profile
 
 ### 环境变量 (.env)
 
-| 变量 | 说明 | 默认值 |
-|------|------|--------|
-| `LLM_API_KEY` | LLM API 密钥 | 必填 |
-| `LLM_BASE_URL` | API 基础 URL | https://api.openai.com/v1 |
-| `LLM_MODEL_NAME` | 模型名称 | gpt-4o-mini |
-| `EMBEDDING_API_KEY` | Embedding API 密钥（可选） | 使用 LLM_API_KEY |
-| `EMBEDDING_BASE_URL` | Embedding API URL（可选） | 使用 LLM_BASE_URL |
-| `EMBEDDING_MODEL_NAME` | Embedding 模型 | text-embedding-3-small |
-| `EMBEDDING_BATCH_SIZE` | Embedding 批次大小 | 64 |
-| `LLM_TIMEOUT` | API 超时时间（秒） | 60 |
-| `LLM_MAX_RETRIES` | 最大重试次数 | 3 |
+
+| 变量                     | 说明                    | 默认值                                                    |
+| ---------------------- | --------------------- | ------------------------------------------------------ |
+| `LLM_API_KEY`          | LLM API 密钥            | 必填                                                     |
+| `LLM_BASE_URL`         | API 基础 URL            | [https://api.openai.com/v1](https://api.openai.com/v1) |
+| `LLM_MODEL_NAME`       | 模型名称                  | gpt-4o-mini                                            |
+| `EMBEDDING_API_KEY`    | Embedding API 密钥（可选）  | 使用 LLM_API_KEY                                         |
+| `EMBEDDING_BASE_URL`   | Embedding API URL（可选） | 使用 LLM_BASE_URL                                        |
+| `EMBEDDING_MODEL_NAME` | Embedding 模型          | text-embedding-3-small                                 |
+| `EMBEDDING_BATCH_SIZE` | Embedding 批次大小        | 64                                                     |
+| `LLM_TIMEOUT`          | API 超时时间（秒）           | 60                                                     |
+| `LLM_MAX_RETRIES`      | 最大重试次数                | 3                                                      |
+
 
 ### 工具配置 (config/tools_config.yaml)
 
@@ -208,20 +201,24 @@ print(store.get_stats())
 各工具的作用和使用场景：
 
 ### search_course_knowledge_base
+
 - **作用**：搜索课程知识库
 - **使用场景**：学生提问涉及课程内容时**优先**使用
 
 ### search_arxiv
+
 - **作用**：搜索学术论文
 - **使用场景**：需要最新研究进展、论文参考时
 - **提示**：建议使用英文关键词获得更好结果
 
 ### web_search
+
 - **作用**：互联网搜索
 - **使用场景**：查找最新资讯、工具文档、教程
 - **注意**：需要网络连接，有速率限制
 
 ### sequential_thinking
+
 - **作用**：结构化多步推理
 - **使用场景**：复杂问题分析（调试代码、设计实验方案）
 
@@ -317,22 +314,29 @@ python test_chat.py
 ## ❓ 常见问题
 
 ### Q: 启动时提示 "配置不完整"
+
 A: 请检查 `.env` 文件是否存在且包含 `LLM_API_KEY` 和 `LLM_BASE_URL`。
 
 ### Q: 知识库检索不到内容
+
 A:
+
 1. 检查 `data/raw/` 是否有 PDF 文件
 2. 运行 `python setup.py` 构建索引
 3. 运行 `python test_retrieval.py "查询"` 验证
 
 ### Q: 工具调用失败
+
 A:
+
 1. 检查网络连接
 2. 查看日志 `logs/chat_*.jsonl`
 3. 检查 `config/tools_config.yaml` 中工具是否启用
 
 ### Q: 如何更换 LLM 模型？
+
 A: 修改 `.env` 文件中的 `LLM_MODEL_NAME` 和对应的 API 配置。
 
 ### Q: 日志文件在哪里？
+
 A: 日志保存在 `logs/chat_YYYY-MM-DD.jsonl`，按日期命名。
