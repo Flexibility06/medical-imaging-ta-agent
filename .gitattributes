@@ -1,0 +1,4 @@
+# GitHub Release「Source code」归档与 git archive 默认不包含下列路径；
+# 完整 git clone 仍保留，便于本地开发与自检。
+test_*.py export-ignore
+test_all.py export-ignore

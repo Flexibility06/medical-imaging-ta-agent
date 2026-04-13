@@ -1,0 +1,35 @@
+# 工具开关与参数配置
+
+tools:
+  search_course_knowledge_base:
+    enabled: true
+    default_top_k: 5
+    # 知识库检索是核心工具，默认始终开启
+
+  search_arxiv:
+    enabled: true
+    default_max_results: 5
+    language_hint: "建议使用英文关键词搜索以获得更好结果"
+
+  web_search:
+    enabled: true
+    default_max_results: 5
+    rate_limit_delay: 1.0  # 两次搜索间最小间隔（秒）
+
+  sequential_thinking:
+    enabled: true
+    max_thoughts: 20  # 单次推理链最大步数
+
+# MCP 扩展配置（可选）
+mcp:
+  enabled: false  # 默认关闭，高级用户可开启
+  servers: []
+  # 示例配置:
+  # - name: "sequential-thinking"
+  #   command: "npx"
+  #   args: ["-y", "@anthropic/mcp-sequential-thinking"]
+  #   env: {}
+  # - name: "web-search"
+  #   command: "npx"
+  #   args: ["-y", "@anthropic/mcp-web-search"]
+  #   env: {}
